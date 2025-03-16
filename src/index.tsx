@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import React, { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react'
 import * as Blockly from 'blockly/core'
 import 'blockly/blocks'
 
@@ -30,11 +30,11 @@ const BlocklyComponent = ({
   const ref = useRef<HTMLDivElement>(null)
   const [workspace, setWorkspace] = useState<Blockly.WorkspaceSvg>()
 
-  const changeListener = () => {
+  const changeListener = useCallback(() => {
     if (workspace && onWorkspaceChange) {
       onWorkspaceChange(workspace)
     }
-  }
+  }, [workspace, onWorkspaceChange])
 
   useLayoutEffect(() => {
     // Import locale messages then initialize workspace with given options.
@@ -42,7 +42,7 @@ const BlocklyComponent = ({
       Blockly.setLocale(module.default)
       if (ref.current) setWorkspace(Blockly.inject(ref.current, blocklyOptions))
     })
-  }, [])
+  }, [locale, blocklyOptions])
 
   useEffect(() => {
     // Load initial Xml.
@@ -52,12 +52,12 @@ const BlocklyComponent = ({
     if (workspace && onWorkspaceChange)
       workspace.addChangeListener(changeListener)
     return () => workspace?.removeChangeListener(changeListener)
-  }, [workspace])
+  }, [workspace, initialXml, onWorkspaceChange, changeListener])
 
   // Auto-resize workspace svg.
   useEffect(() => {
     if (workspace) Blockly.svgResize(workspace)
-  }, [ref.current?.offsetHeight, ref.current?.offsetWidth])
+  }, [workspace, ref.current?.offsetHeight, ref.current?.offsetWidth])
 
   return (
     <div id={id || 'blockly'} className={className} style={style} ref={ref} />
